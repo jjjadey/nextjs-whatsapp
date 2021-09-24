@@ -1,25 +1,92 @@
-import styled from 'styled-components';
 import { Avatar, IconButton, Button } from '@material-ui/core';
 import ChatIcon from '@material-ui/icons/Chat';
 import MoreVertIcon from '@material-ui/icons/MoreVert';
 import SearchIcon from '@material-ui/icons/Search';
+import styled from 'styled-components';
+import * as EmailValidator from 'email-validator';
+import { auth, db } from '../firebase';
+import { signOut } from "firebase/auth";
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { useCollection } from 'react-firebase-hooks/firestore';
+import { collection, doc, addDoc, getDoc, query, where } from "firebase/firestore";
+
 
 function Sidebar() {
+    const [user] = useAuthState(auth);
+    // console.log(collection)
+
+    // https://cloud.google.com/firestore/docs/query-data/get-data
+    const docRef = doc(db, "users", "chats");
+    const docSnap = getDoc(docRef);
+    console.log(docSnap)
+
+    // const q = query(collection(db, "chats"), where('users', 'array-contains', 'user.email'));
+    // console.log('.....', q)
+    // const querySnapshot = getDocs(q);
+    // console.log('//////', querySnapshot);
+    // const [chatsSnapshot] = useCollection(querySnapshot)
+    // querySnapshot.forEach((doc) => {
+    //     // doc.data() is never undefined for query doc snapshots
+    //     console.log(doc.id, " => ", doc.data());
+    // });
+
+
+
+
+    // const usersChatRef = collection(db, 'users');
+    // const q = query(usersChatRef, where('users', 'array-contains', 'user.email'));
+    // console.log('>>>>', q);
+
+    // const querySnapshot = getDocs(q);
+    // console.log('++++++', querySnapshot);
+    // // querySnapshot.forEach((doc) => {
+    // //     // doc.data() is never undefined for query doc snapshots
+    // //     console.log(doc.id, " => ", doc.data());
+    // // });
+
+
+
+
+
+    // const [chatsSnapshot] = useCollection(q)
+    // console.log('>>>>>',chatsSnapshot)
+
+    // const usersCollectionRef = collection(db, 'users');
+    // console.log(usersCollectionRef)
+    // const docRef = doc(db, "chats", user.email);
+    // const docSnap = getDoc(docRef);
+    // console.lo(docSnap)
+
+    // const userChatRef = collection('chats').where('users', 'array-contains', user.email);
+    // console.log(userChatRef);
+
     const createChat = () => {
         const input = prompt('Please enter an email address for the user you wish to chat with');
 
         if (!input) return null;
 
-        if (EmailValidator.validateEmail(input)) {
+        const isNotMyEmail = input !== user.email;
+        if (EmailValidator.validate(input) && isNotMyEmail) {
             //we need to add the chat into the DB 'chat' collection 
+            addDoc(collection(db, "chats"), {
+                users: [user.email, input]
+            });
+            // db.collection('chats').add({
+            //     users: [user.email, input],
+            // })
         }
 
     }
 
+    // const chatAlreadyExists = (recipientEmail) => {
+    //     chatsSnapshot?.docs.find
+    // }
+
+
     return (
         <Container>
             <Header>
-                <UserAvatar />
+                <UserAvatar onClick={() => signOut(auth)} />
                 <IconContainer>
                     <IconButton>
                         <ChatIcon />
@@ -33,7 +100,7 @@ function Sidebar() {
                 <SearchIcon />
                 <SerachInput placeholder="Search in chats" />
             </Search>
-            <SidebarButton onclick={createChat}>Start a new chat</SidebarButton>
+            <SidebarButton onClick={createChat}>Start a new chat</SidebarButton>
         </Container>
     )
 }
